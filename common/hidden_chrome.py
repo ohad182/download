@@ -2,12 +2,10 @@ import errno
 import os
 import platform
 import subprocess
-import sys
 import time
 import warnings
 
 from selenium.common.exceptions import WebDriverException
-from selenium.webdriver.common import utils
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
 from selenium.webdriver.chrome import service, webdriver, remote_connection
 
@@ -69,7 +67,7 @@ class HiddenChromeWebDriver(webdriver.WebDriver):
     def __init__(self, executable_path="chromedriver", port=0,
                  options=None, service_args=None,
                  desired_capabilities=None, service_log_path=None,
-                 chrome_options=None, keep_alive=True):
+                 chrome_options=None, keep_alive=True, download_dir=None):
         if chrome_options:
             warnings.warn('use options instead of chrome_options',
                           DeprecationWarning, stacklevel=2)
@@ -103,3 +101,14 @@ class HiddenChromeWebDriver(webdriver.WebDriver):
             self.quit()
             raise
         self._is_remote = False
+        self.enable_download_in_headless_chrome(download_dir)
+
+    def enable_download_in_headless_chrome(self, download_dir):
+        # add missing support for chrome "send_command"  to selenium webdriver
+        self.command_executor._commands["send_command"] = ("POST", '/session/$sessionId/chromium/send_command')
+
+        params = {'cmd': 'Page.setDownloadBehavior', 'params': {'behavior': 'allow', 'downloadPath': download_dir}}
+        command_result = self.execute("send_command", params)
+        print("response from browser:")
+        for key in command_result:
+            print("result:" + key + ":" + str(command_result[key]))

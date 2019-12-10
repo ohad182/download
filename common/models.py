@@ -19,6 +19,7 @@ class ReportInformation(object):
         self.main_menu_id = kwargs.get('main_menu_id', None)
         self.export_menu_id = kwargs.get('export_menu_id', None)
         self.export_type_id_prefix = kwargs.get('export_type_id_prefix', None)
+        self.ignore_options = kwargs.get("ignore_options", None)
 
     def print_getting(self):
         return print("Getting report for category: {} to: {}".format(self.category, self.output_file))
