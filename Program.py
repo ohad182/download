@@ -1,13 +1,12 @@
-# from download.Downloader import Downloader
 import sys
-import os
 import threading
 import tkinter as ui
+from tkinter import ttk
 import common
-import json
 import traceback
 from common.configuration import Configuration
-from common.models import Reports, ReportInformation
+from common.models import Reports, ReportInformation, IssueComponentData, IssueComponentSelection
+from common.preserved_config import PreservedConfig
 from report.all_issues_components_report import AllIssuesComponentReport
 from report.all_stories_report import AllStoriesReport
 from report.mts_projects_report import MtsProjectReport
@@ -18,19 +17,14 @@ from report.versions_report import VersionsReport
 
 WINDOWED = True
 
-VERSIONS_REPORT = 'http://webilsites.marvell.com/sites/MISLSites/FHILL/IT/IA/JIRA/_layouts/15/ReportServer/RSViewerPage.aspx?rv:RelativeReportUrl=/sites/MISLSites/FHILL/IT/IA/JIRA/PublicDocuments/Reports/Versions%20Data.rdl&Source=http%3A%2F%2Fwebilsites%2Emarvell%2Ecom%2Fsites%2FMISLSites%2FFHILL%2FIT%2FIA%2FJIRA%2FPublicDocuments%2FForms%2FAllItems%2Easpx%3FRootFolder%3D%252fsites%252fMISLSites%252fFHILL%252fIT%252fIA%252fJIRA%252fPublicDocuments%252fReports%26FolderCTID%3D0x012000F0871E736C14AF4781864003DD2CBE29%23InplviewHash91b5b264%2D49d9%2D4948%2D94c9%2Db30bec91f7f8%3DTreeField%253DFolders%2DTreeValue%253DReports%2DProcessQStringToCAML%253D1%2DPaged%253DTRUE%2Dp%5FSortBehavior%253D0%2Dp%5FFileLeafRef%253DErratum%25255fHierarchy%25252erdl%2Dp%5FID%253D121%2DRootFolder%253D%25252fsites%25252fMISLSites%25252fFHILL%25252fIT%25252fIA%25252fJIRA%25252fPublicDocuments%25252fReports%2DPageFirstRow%253D31'
-ALL_STORIES_REPORT = 'http://webilsites.marvell.com/sites/MISLSites/FHILL/IT/IA/JIRA/_layouts/15/ReportServer/RSViewerPage.aspx?rv:RelativeReportUrl=/sites/MISLSites/FHILL/IT/IA/JIRA/PublicDocuments/Reports/All%20Stories%20by%20Rank%20with%20sub%20tasks.rdl'
-
-ALL_ISSUES_COMPONENTS = 'http://webilsites.marvell.com/sites/MISLSites/FHILL/IT/IA/JIRA/_layouts/15/ReportServer/RSViewerPage.aspx?rv:RelativeReportUrl=/sites/MISLSites/FHILL/IT/IA/JIRA/PublicDocuments/Reports/All_Issues_of_a_Project_with%20components.rdl'
-MTS_PROJECTS = 'http://webilsites.marvell.com/sites/MISLSites/FHILL/IT/IA/JIRA/_layouts/15/ReportServer/RSViewerPage.aspx?rv:RelativeReportUrl=/sites/MISLSites/FHILL/IT/IA/JIRA/PublicDocuments/Reports/NPS%20All%20Bugs%20for%20project.rdl&Source=http%3A%2F%2Fwebilsites%2Emarvell%2Ecom%2Fsites%2FMISLSites%2FFHILL%2FIT%2FIA%2FJIRA%2FPublicDocuments%2FForms%2FAllItems%2Easpx%3FRootFolder%3D%252fsites%252fMISLSites%252fFHILL%252fIT%252fIA%252fJIRA%252fPublicDocuments%252fReports%26FolderCTID%3D0x012000F0871E736C14AF4781864003DD2CBE29%23InplviewHash91b5b264%2D49d9%2D4948%2D94c9%2Db30bec91f7f8%3DTreeField%253DFolders%2DTreeValue%253DReports%2DProcessQStringToCAML%253D1%2DPaged%253DTRUE%2Dp%5FSortBehavior%253D0%2Dp%5FFileLeafRef%253DErrata%252520with%252520same%252520JIRA%252520id%25252erdl%2Dp%5FID%253D96%2DRootFolder%253D%25252fsites%25252fMISLSites%25252fFHILL%25252fIT%25252fIA%25252fJIRA%25252fPublicDocuments%25252fReports%2DPageFirstRow%253D31'
-
 config: Configuration
+issue_component_data: IssueComponentData = IssueComponentData()  # todo: remove mock mock=True
 
 
 def download_versions_report():
     all_versions_data = reports.versions_report
     if all_versions_data.url is None:
-        all_versions_data.url = VERSIONS_REPORT
+        all_versions_data.url = common.VERSIONS_REPORT_URL
 
     try:
         report = VersionsReport(all_versions_data)
@@ -45,7 +39,7 @@ def download_all_stories_report():
     # window.clear_log()
     all_stories_data = reports.all_stories_report
     if all_stories_data.url is None:
-        all_stories_data.url = ALL_STORIES_REPORT
+        all_stories_data.url = common.ALL_STORIES_REPORT_URL
 
     try:
         report = AllStoriesReport(all_stories_data)
@@ -59,7 +53,7 @@ def download_all_stories_report():
 def download_mts_projects_report():
     mts_projects_data = reports.mts_projects_report
     if mts_projects_data.url is None:
-        mts_projects_data.url = MTS_PROJECTS
+        mts_projects_data.url = common.MTS_PROJECTS_URL
 
     report = MtsProjectReport(mts_projects_data)
     required_options = []
@@ -102,16 +96,35 @@ def download_mts_task(mts_projects_data: ReportInformation, option_select, lock=
     return result
 
 
-def download_all_issues_components_report():
+def get_all_issues_components_report_obj() -> AllIssuesComponentReport:
     all_issues_components_data = reports.all_issues_components_report
     if all_issues_components_data.url is None:
-        all_issues_components_data.url = ALL_ISSUES_COMPONENTS
+        all_issues_components_data.url = common.ALL_COMPONENTS_REPORT_URL
 
     report = AllIssuesComponentReport(all_issues_components_data)
-    required_options = []
+    return report
+
+
+def download_all_issues_components_report():
+    global issue_component_data
+    all_issues_components_data = reports.all_issues_components_report
+    if all_issues_components_data.url is None:
+        all_issues_components_data.url = common.ALL_COMPONENTS_REPORT_URL
+
+    report = get_all_issues_components_report_obj()
+    report.get_report_content(issue_component_data)
+
+
+def update_issues_components_projects_map(projects_list):
+    global issue_component_data
+    report = get_all_issues_components_report_obj()
+    issue_component_data.projects_map = report.get_options_map(projects_list)
 
 
 def get_section_dict(section_name, default_output, default_url, ignore_optons=None):
+    projects_list = config.get(section_name, "projects", None)
+    if projects_list is not None:
+        projects_list = [x.strip() for x in projects_list.split(',')]
     return {
         "output_file": config.get(section_name, "output_file", default_output),
         "category": config.get(section_name, "category", "MTS"),
@@ -123,7 +136,8 @@ def get_section_dict(section_name, default_output, default_url, ignore_optons=No
         "main_menu_id": config.get(section_name, "main_menu_id", common.MAIN_MENU_ID),
         "export_menu_id": config.get(section_name, "export_menu_id", common.EXPORT_MENU_ID),
         "export_type_id_prefix": config.get(section_name, "export_type_id_prefix", common.EXPORT_TYPE_ID_PREFIX),
-        "ignore_options": config.get(section_name, "ignore_options", ignore_optons)
+        "ignore_options": config.get(section_name, "ignore_options", ignore_optons),
+        "projects": projects_list
     }
 
 
@@ -134,20 +148,43 @@ def get_reports_data():
         config.readcwd()
 
     reports.versions_report = ReportInformation(
-        **get_section_dict('Versions', 'C:\\Temp\\versions.csv', VERSIONS_REPORT))
+        **get_section_dict(common.VERSIONS_REPORT_NAME, 'C:\\Temp\\versions.csv', common.VERSIONS_REPORT_URL))
 
     reports.all_stories_report = ReportInformation(
-        **get_section_dict('AllStories', 'C:\\Temp\\all_stories.csv', ALL_STORIES_REPORT))
+        **get_section_dict(common.ALL_STORIES_REPORT_NAME, 'C:\\Temp\\all_stories.csv', common.ALL_STORIES_REPORT_URL))
 
     reports.all_issues_components_report = ReportInformation(
-        **get_section_dict("AllIssuesComponents", 'C:\\Temp\\all_issues_components.csv', ALL_ISSUES_COMPONENTS)
+        **get_section_dict(common.ALL_COMPONENTS_REPORT_NAME, 'C:\\Temp\\all_issues_components.csv',
+                           common.ALL_COMPONENTS_REPORT_URL)
     )
+    reports.all_issues_components_report.version_dropdown_id = common.VERSION_DROPDOWN_ID
 
     reports.mts_projects_report = ReportInformation(
-        **get_section_dict("MtsProjects", 'C:\\Temp\\mts_projects.csv', MTS_PROJECTS, common.MTS_IGNORE_OPTIONS)
+        **get_section_dict(common.MTS_PROJECTS_REPORT_NAME, 'C:\\Temp\\mts_projects.csv', common.MTS_PROJECTS_URL,
+                           common.MTS_IGNORE_OPTIONS)
     )
 
+    if reports.all_issues_components_report.projects is None:
+        # got nothing from config, set defaults
+        reports.all_issues_components_report.projects = common.DEFAULT_ALL_COMPONENTS_PROJECTS
+
     return reports
+
+
+def load_app_config():
+    config_section = PreservedConfig().get(common.ALL_COMPONENTS_REPORT_NAME)
+    if config_section is not None:
+        AllIssuesComponentReport.site_projects = config_section.get("site_projects", [])
+        selections = config_section.get("selections", None)
+        config_project_map = config_section.get("project_map", {})
+        if selections is not None:
+            for selection in selections:
+                issue_component_data.selections.append(IssueComponentSelection(**selection))
+                if selection['project'] not in config_project_map:
+                    config_project_map[selection['project']] = []
+                if selection['version'] not in config_project_map[selection['project']]:
+                    config_project_map[selection['project']].append(selection['version'])
+        issue_component_data.projects_map = config_project_map
 
 
 class Logger:
@@ -176,23 +213,22 @@ class WindowView(object):
         self.mts_projects_button = None
         self.report2_button = None
         self.components_frame = None
+        self.download_issues_components_button = None
         self.init_view()
 
     def init_view(self):
         self.ui = ui
         self.app = ui.Tk()
         self.app.title(common.APP_NAME)
-        self.app.geometry('500x200')
+        self.app.geometry('500x400')
 
         actions_frame = ui.Frame(self.app)
 
         self.versions_button = ui.Button(actions_frame, text="Versions", command=self.get_versions)
-        # self.versions_button.pack()
         self.versions_button.grid(row=0, column=0, padx=20, pady=3)
 
         self.mts_projects_button = ui.Button(actions_frame, text="MTS Projects", command=self.get_mts_projects)
         self.mts_projects_button.grid(row=0, column=1, padx=20, pady=3)
-        # self.mts_projects_button.config(state="disabled")
 
         self.all_stories_button = ui.Button(actions_frame, text="All Stories", command=self.get_all_stories)
         self.all_stories_button.grid(row=1, column=0, padx=20, pady=3)
@@ -203,10 +239,10 @@ class WindowView(object):
 
         actions_frame.pack()
 
-        # self.build_components_frame()
+        self.build_components_frame()
 
         log_frame = ui.Frame(self.app)
-        log_frame.pack(anchor=ui.N, fill=ui.Y, expand=True)
+        log_frame.pack(anchor=ui.N, fill="both", expand=True)
 
         text_scroll = ui.Scrollbar(log_frame)
         self.log_panel = ui.Text(log_frame, height=7)
@@ -224,12 +260,17 @@ class WindowView(object):
         config_label.pack()
 
     def build_components_frame(self):
-        self.components_table = ui.Frame(self.app, borderwidth=4, relief='ridge')
-        self.components_table.pack(fill='both', expand=True)
+        components_table = ui.Frame(self.app, borderwidth=4, relief='ridge')
+        components_table.pack(fill='x')
 
-        headers_frm = ui.Frame(self.components_table)
+        label = ui.Label(components_table, text="Issues Components Report")
+        label.pack(padx=4, pady=4)
+
+        headers_frm = ui.Frame(components_table)
         headers_frm.pack(fill='both')
 
+        refresh_button = ui.Button(headers_frm, text="Refresh", command=self.refresh_components_list)
+        refresh_button.pack(side=ui.LEFT, padx=3, pady=4)
         header1 = ui.Label(headers_frm, text="Project")
         header1.pack(side=ui.LEFT, padx=3, pady=4, fill=ui.X, expand=True)
         header2 = ui.Label(headers_frm, text="Version")
@@ -237,38 +278,92 @@ class WindowView(object):
         add_button = ui.Button(headers_frm, text="Add", command=self.add_component_row)
         add_button.pack(side=ui.LEFT, padx=3, pady=4)
 
-        self.components_frame = ui.Frame(self.components_table)
+        self.components_frame = ui.Frame(components_table)
         self.components_frame.pack(anchor=ui.N, fill=ui.X, expand=True, side=ui.TOP)
 
-    def populate_components_list(self, components_list):
-        if components_list is not None and len(components_list) > 0:
+        download_issues_components_frame = ui.Frame(components_table)
+        download_issues_components_frame.pack(fill='both')
+
+        self.download_issues_components_button = ui.Button(download_issues_components_frame, text="Download",
+                                                           command=lambda: threading.Thread(
+                                                               target=self.download_issues_components).start())
+        self.download_issues_components_button.pack(padx=3, pady=4)
+        self.download_issues_components_button.config(state="disabled")
+
+        if len(issue_component_data.projects_map) > 0:
+            self.populate_components_list()
+
+    def populate_components_list(self):
+        global issue_component_data
+        if issue_component_data.selections is not None and len(issue_component_data.selections) > 0:
             row = 0
-            self.components_table.pack(anchor=ui.N, fill=ui.X, expand=True, side=ui.TOP)
-            for item in components_list:  # Rows
-                self.components_frame.grid_columnconfigure(0, weight=1, uniform="group%s" % row)
-                self.components_frame.grid_columnconfigure(1, weight=1, uniform="group%s" % row)
-                self.components_frame.grid_rowconfigure(row)
+            for item in issue_component_data.selections:  # Rows
+                self.add_component_row(row, item)
+                row = row + 1
 
-                key_entry_text = ui.StringVar()
-                key_entry_text.set(item.path_in_set)
-                b0 = ui.Entry(self.components_frame, textvariable=key_entry_text)
-                b0.config(state=ui.DISABLED)
-                b0.grid(row=row, column=0, sticky='news', padx=3)
+    def refresh_components_list(self):
+        self.remove_all_rows()
+        update_issues_components_projects_map(reports.all_issues_components_report.projects)
+        self.populate_components_list()
 
-                value_entry_text = ui.StringVar()
-                value_entry_text.set(item.path_in_fs)
-                b1 = ui.Entry(self.components_frame, textvariable=value_entry_text)
-                b1.grid(row=row, column=1, sticky='news', padx=3)
+    def add_component_row(self, row=None, selection: IssueComponentSelection = None):
+        global issue_component_data
+        if selection is None:
+            selection = IssueComponentSelection()
+            issue_component_data.selections.append(selection)
+        if row is None:
+            row = int(len(issue_component_data.ui_components) / 3)
 
-                row += 1
-        else:
-            self.components_frame.pack_forget()
+        self.components_frame.grid_columnconfigure(0, weight=1, uniform="group%s" % row)
+        self.components_frame.grid_columnconfigure(1, weight=1, uniform="group%s" % row)
+        self.components_frame.grid_rowconfigure(row)
 
-    def add_component_row(self):
-        print("add component row")
+        project_combo = ttk.Combobox(self.components_frame, values=issue_component_data.get_projects())
+        if selection.project is not None:
+            project_combo.current(issue_component_data.get_projects().index(selection.project))
+        issue_component_data.register_ui(project_combo, row, 0)
+        project_combo.bind("<<ComboboxSelected>>", issue_component_data.project_selection_changed)
+        project_combo.grid(row=row, column=0, sticky='news', padx=3)
 
-    def remove_component_row(self):
-        print("remove component row")
+        versions_list = [] if selection.version is None else issue_component_data.get_versions(selection.project)
+        version_combo = ttk.Combobox(self.components_frame,
+                                     values=versions_list)
+        if selection.version is not None:
+            version_combo.current(issue_component_data.projects_map[selection.project].index(selection.version))
+        issue_component_data.register_ui(version_combo, row, 1)
+        version_combo.bind("<<ComboboxSelected>>", issue_component_data.version_selection_changed)
+        version_combo.grid(row=row, column=1, sticky='news', padx=3)
+
+        remove_button = ui.Button(self.components_frame, text="Remove",
+                                  command=lambda arg1=row: self.remove_component_row(remove_button))
+        remove_button.grid(row=row, column=2, sticky='news', padx=3)
+        issue_component_data.register_ui(remove_button, row, 2)
+        self.download_issues_components_button.config(state="normal")
+
+    def remove_all_rows(self):
+        global issue_component_data
+        for idx, selection in enumerate(issue_component_data.selections):
+            # send remove button from this row index
+            remove_btn = issue_component_data.get_remove_btn(idx)
+            self.remove_component_row(remove_btn, idx)
+
+    def remove_component_row(self, btn, row=-1):
+        global issue_component_data
+        row = issue_component_data.unregister_ui(btn)
+        self.components_frame.grid_rowconfigure(row)
+        if len(issue_component_data.selections) == 0:
+            self.download_issues_components_button.config(state="disabled")
+
+    def download_issues_components(self):
+        self._change_frame_state(self.components_frame, "disabled")
+        global issue_component_data
+        print("Download issues components {}".format(issue_component_data.selections))
+        download_all_issues_components_report()
+        self._change_frame_state(self.components_frame, "normal")
+
+    def _change_frame_state(self, frame, state):
+        for child in frame.winfo_children():
+            child.configure(state=state)
 
     def get_mts_projects(self):
         threading.Thread(target=self.get_mts_projects_task).start()
@@ -320,10 +415,12 @@ class WindowView(object):
 
 
 if __name__ == "__main__":
-    window = WindowView()
     config = Configuration()
+    PreservedConfig()
+    window = WindowView()
+    load_app_config()
     reports = get_reports_data()
     window.set_config_text("Config: {}".format(config.config_path))
     # download_versions_report(reports.versions_report)
-    # window.populate_components_list([])
+
     window.app.mainloop()

@@ -16,14 +16,15 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 
 # from common.hidden_chrome import HiddenChromeWebDriver
+from common.app_dir import AppDir
 from common.models import ReportInformation
 
 
 class Report(object):
     def __init__(self, report_info: ReportInformation, download_time=20, driver='assets/chromedriver.exe',
-                 hidden=False, driver_path=None, notify_temp_dir=True):
+                 hidden=False, driver_path=None):
         self.report_info = report_info
-        self.app_temp_directory = common.create_temp_folder(notify_temp_dir)
+        self.app_temp_directory = AppDir().app_directory
         self.chrome_driver_path = driver_path if driver_path is not None else self.copy_driver(driver)
         self.download_time = download_time
         options = webdriver.ChromeOptions()

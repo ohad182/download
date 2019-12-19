@@ -5,8 +5,7 @@ from common.models import ReportInformation
 
 class VersionsReport(BaseReport):
     def __init__(self, report_info: ReportInformation, update_driver_lock=None):
-        super(VersionsReport, self).__init__(report_info, notify_temp_dir=False,
-                                             driver_update_lock=update_driver_lock)
+        super(VersionsReport, self).__init__(report_info, driver_update_lock=update_driver_lock)
 
     def get_report_content(self, **kwargs):
         result = ""

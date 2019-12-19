@@ -6,6 +6,9 @@ import time
 import selenium.webdriver.support.ui as ui
 from datetime import datetime
 from abc import ABC, abstractmethod
+
+from common.app_dir import AppDir
+from common.hidden_chrome import HiddenChromeWebDriver
 from common.models import ReportInformation
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
@@ -16,21 +19,26 @@ from selenium.webdriver.support import expected_conditions as EC
 
 class BaseReport(ABC):
 
-    def __init__(self, report_info: ReportInformation, download_time=20,
-                 hidden=True, driver_path='assets/chromedriver.exe', notify_temp_dir=True, driver_update_lock=None):
+    def __init__(self, report_info: ReportInformation, download_time=20, driver_path='assets/chromedriver.exe',
+                 driver_update_lock=None):
         self.update_driver_lock = driver_update_lock
         self.report_info = report_info
-        self.app_temp_directory = common.create_temp_folder(notify_temp_dir)
+        self.app_temp_directory = AppDir().app_directory
         self.chrome_driver_path = self._update_driver(driver_path)
         self.download_time = download_time
         options = webdriver.ChromeOptions()
         options.add_argument("download.default_directory={}".format(self.app_temp_directory))
-        options.add_argument("--headless" if hidden else "--start-maximized")
         prefs = {'download.default_directory': self.app_temp_directory}
         options.add_experimental_option("prefs", prefs)
-        self.driver = webdriver.Chrome(executable_path=self.chrome_driver_path, options=options)
-        self.wait = ui.WebDriverWait(self.driver, 60)
 
+        is_headless = common.str_to_bool(os.environ.get("HEADLESS", "False"))  # if specified headless as true, be true
+        if is_headless:
+            options.add_argument("--headless")
+            self.driver = HiddenChromeWebDriver(executable_path=self.chrome_driver_path, options=options)
+        else:
+            options.add_argument("--start-maximized")
+            self.driver = webdriver.Chrome(executable_path=self.chrome_driver_path, options=options)
+        self.wait = ui.WebDriverWait(self.driver, 60)
 
     def _get_table_content(self):
         content = None
@@ -67,17 +75,19 @@ else {
             print("Page loading phase finished")
 
     def close(self):
-        self.driver.close()
+        self.driver.quit()
 
     def wait_loading_end(self):
         time.sleep(1)
         self.wait.until(EC.invisibility_of_element_located((By.ID, self.report_info.loader_id)))
         time.sleep(1)
 
-    def get_select_options(self, select_id):
+    def get_select_options(self, select_id, ignore_options=None):
+        if ignore_options is None:
+            ignore_options = []
         plain_select = self.driver.find_element(By.ID, select_id)
         select = ui.Select(plain_select)
-        options = [x.text for x in select.options]
+        options = [x.text for x in select.options if x.text not in ignore_options]
         return options
 
     def select_project_category(self, category):
@@ -85,12 +95,8 @@ else {
         plain_select = self.driver.find_element(By.ID, select_id)
         select = ui.Select(plain_select)
 
-        option_index = -1
         select_options = select.options
-        for i in range(len(select_options)):
-            if select_options[i].text == category:
-                option_index = i
-                break
+        option_index = next((idx for idx, option in enumerate(select_options) if option.text == category), -1)
 
         if option_index is -1:
             raise Exception("Cannot find option '{}' in dropdown '#{}'".format(category, select_id))
@@ -136,3 +142,6 @@ else {
             base_path = os.path.abspath('.')
         print("Base path: {}".format(base_path))
         return os.path.join(base_path, relative_path)
+
+    def load(self):
+        pass

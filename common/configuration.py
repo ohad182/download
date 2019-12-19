@@ -14,6 +14,8 @@ def try_parse_int(value):
 
 
 class Configuration(object):
+    ENV = "ENV"
+
     def __init__(self):
         self.config = cp.RawConfigParser()
         self.config_path = None
@@ -32,9 +34,18 @@ class Configuration(object):
         if config_file:
             self.read(config_file)
             print("Found {}".format(config_file))
+            self.expose_env()
         else:
             print("No config file found, working with defaults")
 
     def read(self, config_file):
         self.config.read(config_file)
         self.config_path = config_file
+
+    def expose_env(self):
+        if self.config.has_section(Configuration.ENV):
+            for var_name in self.config.options(Configuration.ENV):
+                var_name = var_name.upper()
+                var_value = self.config.get(Configuration.ENV, var_name).replace('"', "").replace("'", '')
+                print("Exposing {} - {}: {}".format(Configuration.ENV, var_name, var_value))
+                os.environ[var_name] = var_value

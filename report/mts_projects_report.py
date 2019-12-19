@@ -5,8 +5,7 @@ from common.models import ReportInformation
 
 class MtsProjectReport(BaseReport):
     def __init__(self, report_info: ReportInformation, update_driver_lock=None):
-        super(MtsProjectReport, self).__init__(report_info, notify_temp_dir=False,
-                                               driver_update_lock=update_driver_lock)
+        super(MtsProjectReport, self).__init__(report_info, driver_update_lock=update_driver_lock)
 
     def get_report_content(self, **kwargs):
         option = kwargs.get("option", None)
@@ -46,7 +45,8 @@ class MtsProjectReport(BaseReport):
                                 except Exception as e:
                                     print("unable to write: {}".format(line_content))
                                 continue
-                            if line_content.lower().startswith('jproject') and not can_write:
+                            if (line_content.lower().startswith('jproject') or line_content.lower().startswith(
+                                    'jid')) and not can_write:
                                 can_write = True
                                 if result_empty:
                                     result_file.write(line_content + "\n")

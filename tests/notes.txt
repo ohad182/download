@@ -1,0 +1,102 @@
+generic viewer: $find('m_sqlRsWebPart_ctl00_ReportViewer')
+internal_viewer = $find('m_sqlRsWebPart_ctl00_ReportViewer')._internalViewerId
+
+window.open($find('m_sqlRsWebPart_ctl00_ReportViewer_ctl03').ExportUrlBase+"CSV", "_blank")
+
+"/sites/MISLSites/FHILL/IT/IA/JIRA/Reserved.ReportViewerWebPart.axd?ReportSession=is0cpd55qqe2ij452bzic455&Culture=1033&CultureOverrides=True&UICulture=1033&UICultureOverrides=True&ReportStack=1&ControlID=b53b6d843f1e44a79a5af8dc6aaec9d3&OpType=Export&FileName=NPS+All+Bugs+for+project&ContentDisposition=OnlyHtmlInline&Format="
+
+
+function handler() 
+{ 
+    if (oReq.readyState == 4 /* complete */) { 
+        if (oReq.status == 200) { 
+            console.log(oReq.responseText); 
+        } 
+    } 
+} 
+var oReq = window.XMLHttpRequest ? new window.XMLHttpRequest() : new ActiveXObject("MSXML2.XMLHTTP.3.0");
+if (oReq != null) { 
+    oReq.open("GET", $find('m_sqlRsWebPart_ctl00_ReportViewer_ctl03').ExportUrlBase+"CSV", false); 
+    oReq.send(null);
+	if (oReq.status === 200) {
+	  console.log(oReq.responseText);
+	}
+} 
+else { 
+    window.console.log("AJAX (XMLHTTP) not supported."); 
+} 
+
+
+
+
+$(function() {
+    $.ajax({
+       async: false,
+       url: $find('m_sqlRsWebPart_ctl00_ReportViewer_ctl03').ExportUrlBase+"CSV"
+    });
+});
+
+
+m_sqlRsWebPart_ctl00_ctl19_ctl06_ctl03 - project_dd
+m_sqlRsWebPart_ctl00_ctl19_ctl06_ctl05 - version_dd
+
+
+psudo:
+results = []
+for option in project_dd.options:
+	project_dd.set_active(option)
+	project_dd.TriggerPostBackScript()
+	results.append({"project": option, "values: version_dd.options })
+	
+	
+	
+	
+
+base_project: project selected value
+base_version: the version selected in dd
+
+
+BM, HAWK, TESLA
+
+
+{
+	"BM": ["V1", "V2"]
+	"HAWK": []
+}
+
+
+
+
+
+
+
+
+
+
+"""
+var select_handler = $find("m_sqlRsWebPart_ctl00_ctl19_ctl06_ctl03");
+var select = document.getElementById(select_handler.DropDownId);
+var opts = select.options;
+
+select.addEventListener('change', function(event){
+    console.log('change');
+})
+
+var proj = "Hawk";
+
+var opt_idx = -1;
+for(var op of opts){
+	if(op.text == proj){
+		opt_idx = op.value;
+		break;
+    }
+}
+if(opt_idx != -1){
+	select.value = opt_idx;
+}
+select_handler.TriggerPostBackScript();
+while(select.disabled){
+    await sleep(500);
+}
+console.log(opt_idx);
+"""
