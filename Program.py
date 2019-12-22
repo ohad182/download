@@ -31,8 +31,9 @@ def download_versions_report():
         report_data = report.get_report_content().replace("\r\n", "\n")
         with open(all_versions_data.output_file, 'w') as f:
             f.write(report_data)
-    except SiteErrorException as e:
-        print('site error: {}'.format(e))
+            print(f"Report generated at: {all_versions_data.output_file}")
+    except Exception as e:
+        print('Error: {}'.format(e))
 
 
 def download_all_stories_report():
@@ -46,8 +47,9 @@ def download_all_stories_report():
         report_data = report.get_report_content().replace("\r\n", "\n")
         with open(all_stories_data.output_file, 'w') as f:
             f.write(report_data)
-    except SiteErrorException as e:
-        print('site error: {}'.format(e))
+            print(f"Report generated at: {all_stories_data.output_file}")
+    except Exception as e:
+        print('Error: {}'.format(e))
 
 
 def download_mts_projects_report():

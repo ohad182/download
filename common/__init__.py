@@ -39,7 +39,7 @@ MTS_IGNORE_OPTIONS = ['ARC-II-III', 'Astute', 'Belkin', 'CORE', 'CPSS', 'CPSS_JO
                       'Nikola_Sx300', 'Nikola_Sx500', 'OAM FW', 'OpenSwitch', 'Plasma_ARCII', 'PoE',
                       'Python Automation', 'RD_Aldrin', 'RD_Lewis', 'RD_xCat3', 'RnD Demo', 'Ryan', 'SAI-SONiC',
                       'SAI1.0', 'SNI', 'SONIC', 'SONIC-Alibaba', 'SV Networking Automation',
-                      'SW Infrastructure and Tools', 'Serdes', 'Switch Dashboard', 'SwitchDev', 'TI-PoE', 'TL-SH1226',
+                      'SW Infrastructure and Tools', 'Serdes', 'Switch Dashboard', 'TI-PoE', 'TL-SH1226',
                       'Tachi', 'Tachi 2 (920)', 'Tesla 2.0', 'Tesla 2.1', 'Tesla 2.2', 'Tesla 2.2.5', 'Tesla 2.2.7',
                       'Tesla 2.2.8', 'Tesla 2.3', 'Tesla 2.3.5', 'Tesla 2.4', 'Tesla 2.4.5', 'Test Security',
                       'Test import web project', 'Troya', 'Validation Book', 'Validation Infra']

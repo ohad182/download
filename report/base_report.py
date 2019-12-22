@@ -78,9 +78,9 @@ else {
         self.driver.quit()
 
     def wait_loading_end(self):
-        time.sleep(1)
         self.wait.until(EC.invisibility_of_element_located((By.ID, self.report_info.loader_id)))
-        time.sleep(1)
+        self.wait.until(
+            EC.visibility_of_element_located((By.ID, "VisibleReportContentm_sqlRsWebPart_ctl00_ReportViewer_ctl09")))
 
     def get_select_options(self, select_id, ignore_options=None):
         if ignore_options is None:

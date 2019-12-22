@@ -12,7 +12,7 @@ class VersionsReport(BaseReport):
         try:
             print("started {}".format(self.report_info.category))
             self.report_info.print_getting()
-            self.open_url(verbose=False)
+            self.open_url(verbose=True)
             self.select_project_category(self.report_info.category)
             self.press_apply()
             result = self._get_table_content()
