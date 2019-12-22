@@ -21,83 +21,6 @@ config: Configuration
 issue_component_data: IssueComponentData = IssueComponentData()  # todo: remove mock mock=True
 
 
-def download_versions_report():
-    all_versions_data = reports.versions_report
-    if all_versions_data.url is None:
-        all_versions_data.url = common.VERSIONS_REPORT_URL
-
-    try:
-        report = VersionsReport(all_versions_data)
-        report_data = report.get_report_content().replace("\r\n", "\n")
-        with open(all_versions_data.output_file, 'w') as f:
-            f.write(report_data)
-            print(f"Report generated at: {all_versions_data.output_file}")
-    except Exception as e:
-        print('Error: {}'.format(e))
-
-
-def download_all_stories_report():
-    # window.clear_log()
-    all_stories_data = reports.all_stories_report
-    if all_stories_data.url is None:
-        all_stories_data.url = common.ALL_STORIES_REPORT_URL
-
-    try:
-        report = AllStoriesReport(all_stories_data)
-        report_data = report.get_report_content().replace("\r\n", "\n")
-        with open(all_stories_data.output_file, 'w') as f:
-            f.write(report_data)
-            print(f"Report generated at: {all_stories_data.output_file}")
-    except Exception as e:
-        print('Error: {}'.format(e))
-
-
-def download_mts_projects_report():
-    mts_projects_data = reports.mts_projects_report
-    if mts_projects_data.url is None:
-        mts_projects_data.url = common.MTS_PROJECTS_URL
-
-    report = MtsProjectReport(mts_projects_data)
-    required_options = []
-    try:
-        report.open_url(verbose=False)
-        all_options = report.get_select_options(mts_projects_data.select_category_id)
-        ignore = [] if mts_projects_data.ignore_options is None else mts_projects_data.ignore_options
-        required_options = [x for x in all_options if x.strip() not in ignore]
-        print(
-            "Found {}/{} projects to retrieve\nClosing all drivers to reduce memory usage".format(len(required_options),
-                                                                                                  len(all_options)))
-    except SiteErrorException as e:
-        print('site error: {}'.format(e))
-    finally:
-        report.close()
-
-    try:
-        lock = threading.Lock()
-        with parallel_backend('threading', n_jobs=-1):
-            try:
-                results = Parallel()(
-                    delayed(download_mts_task)(mts_projects_data, option, lock) for option in required_options)
-                print("All tasks completed")
-                MtsProjectReport.write_report(results, mts_projects_data)
-            except Exception as ex:
-                print(ex)
-    except Exception as e:
-        print(e)
-
-
-def download_mts_task(mts_projects_data: ReportInformation, option_select, lock=None):
-    result = {"option": option_select, "data": ""}
-    try:
-        report = MtsProjectReport(mts_projects_data, lock)
-        data = report.get_report_content(option=option_select)
-        result["data"] = data
-    except Exception as e:
-        print(e)
-        print(traceback.print_exc())
-    return result
-
-
 def get_all_issues_components_report_obj() -> AllIssuesComponentReport:
     all_issues_components_data = reports.all_issues_components_report
     if all_issues_components_data.url is None:
@@ -147,24 +70,13 @@ def get_reports_data():
     global reports, config
     reports = Reports()
     if config:
-        config.readcwd()
-
-    reports.versions_report = ReportInformation(
-        **get_section_dict(common.VERSIONS_REPORT_NAME, 'C:\\Temp\\versions.csv', common.VERSIONS_REPORT_URL))
-
-    reports.all_stories_report = ReportInformation(
-        **get_section_dict(common.ALL_STORIES_REPORT_NAME, 'C:\\Temp\\all_stories.csv', common.ALL_STORIES_REPORT_URL))
+        config.read_from_cwd("all_components.ini")
 
     reports.all_issues_components_report = ReportInformation(
         **get_section_dict(common.ALL_COMPONENTS_REPORT_NAME, 'C:\\Temp\\all_issues_components.csv',
                            common.ALL_COMPONENTS_REPORT_URL)
     )
     reports.all_issues_components_report.version_dropdown_id = common.VERSION_DROPDOWN_ID
-
-    reports.mts_projects_report = ReportInformation(
-        **get_section_dict(common.MTS_PROJECTS_REPORT_NAME, 'C:\\Temp\\mts_projects.csv', common.MTS_PROJECTS_URL,
-                           common.MTS_IGNORE_OPTIONS)
-    )
 
     if reports.all_issues_components_report.projects is None:
         # got nothing from config, set defaults
@@ -210,10 +122,6 @@ class WindowView(object):
         self.log_panel = None
         self.config_string_var = None
         self.app = None
-        self.all_stories_button = None
-        self.versions_button = None
-        self.mts_projects_button = None
-        self.report2_button = None
         self.components_frame = None
         self.download_issues_components_button = None
         self.init_view()
@@ -223,23 +131,6 @@ class WindowView(object):
         self.app = ui.Tk()
         self.app.title(common.APP_NAME)
         self.app.geometry('500x400')
-
-        actions_frame = ui.Frame(self.app)
-
-        self.versions_button = ui.Button(actions_frame, text="Versions", command=self.get_versions)
-        self.versions_button.grid(row=0, column=0, padx=20, pady=3)
-
-        self.mts_projects_button = ui.Button(actions_frame, text="MTS Bugs", command=self.get_mts_projects)
-        self.mts_projects_button.grid(row=0, column=1, padx=20, pady=3)
-
-        self.all_stories_button = ui.Button(actions_frame, text="All Stories", command=self.get_all_stories)
-        self.all_stories_button.grid(row=1, column=0, padx=20, pady=3)
-
-        self.report2_button = ui.Button(actions_frame, text="report2", command=self.get_versions)
-        self.report2_button.grid(row=1, column=1, padx=20, pady=3)
-        self.report2_button.config(state="disabled")
-
-        actions_frame.pack()
 
         self.build_components_frame()
 
@@ -367,53 +258,11 @@ class WindowView(object):
         for child in frame.winfo_children():
             child.configure(state=state)
 
-    def get_mts_projects(self):
-        threading.Thread(target=self.get_mts_projects_task).start()
-
-    def get_mts_projects_task(self):
-        self.set_buttons_state(enabled=False)
-        try:
-            download_mts_projects_report()
-        except Exception as e:
-            print(str(e))
-        finally:
-            self.set_buttons_state(enabled=True)
-
-    def get_all_stories(self):
-        threading.Thread(target=self.get_all_stories_thread).start()
-
-    def get_all_stories_thread(self):
-        self.set_buttons_state(enabled=False)
-        try:
-            download_all_stories_report()
-        except Exception as e:
-            print(str(e))
-        finally:
-            self.set_buttons_state(enabled=True)
-
-    def get_versions(self):
-        threading.Thread(target=self.get_versions_thread).start()
-
-    def get_versions_thread(self):
-        self.set_buttons_state(enabled=False)
-        try:
-            download_versions_report()
-        except Exception as e:
-            print(str(e))
-        finally:
-            self.set_buttons_state(enabled=True)
-
     def clear_log(self):
         self.log_panel.delete('1.0', self.ui.END)
 
     def set_config_text(self, text):
         self.config_string_var.set(text)
-
-    def set_buttons_state(self, enabled=True):
-        state = "normal" if enabled else "disabled"
-        self.versions_button.config(state=state)
-        self.all_stories_button.config(state=state)
-        self.mts_projects_button.config(state=state)
 
 
 if __name__ == "__main__":

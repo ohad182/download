@@ -1,7 +1,7 @@
 import traceback
-from selenium.common.exceptions import WebDriverException
-
+import time
 import common
+from selenium.common.exceptions import WebDriverException
 from common.preserved_config import PreservedConfig
 from report.base_report import BaseReport
 from common.models import ReportInformation, IssueComponentData
@@ -57,6 +57,7 @@ class AllIssuesComponentReport(BaseReport):
         :return:
         """
         try:
+            AllIssuesComponentReport.save(issue_data)
             self.open_url()
             self.set_projects_list()
             for selection in issue_data.selections:
@@ -74,7 +75,6 @@ class AllIssuesComponentReport(BaseReport):
                         break
                 self.press_apply()
                 selection.content = self._get_table_content()
-                AllIssuesComponentReport.save(issue_data)
                 print("done {}".format(selection))
         except Exception as e:
             traceback.print_tb(e.__traceback__)
@@ -83,6 +83,11 @@ class AllIssuesComponentReport(BaseReport):
             self.close()
 
         self.write_report(issue_data.selections)
+
+    def wait_loading_end(self):
+        time.sleep(1)
+        self.wait.until(ec.invisibility_of_element_located((By.ID, self.report_info.loader_id)))
+        time.sleep(1)
 
     @staticmethod
     def save(issue_data: IssueComponentData):

@@ -38,6 +38,21 @@ class Configuration(object):
         else:
             print("No config file found, working with defaults")
 
+    def read_from_cwd(self, filename: str):
+        print("Searching for {} at : {}".format(filename, os.getcwd()))
+        config_file = None
+        for conf in os.listdir(os.getcwd()):
+            if filename in conf:
+                config_file = conf
+                break
+
+        if config_file:
+            self.read(config_file)
+            print("Found {}".format(config_file))
+            self.expose_env()
+        else:
+            print("No config file found, working with defaults")
+
     def read(self, config_file):
         self.config.read(config_file)
         self.config_path = config_file

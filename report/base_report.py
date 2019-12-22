@@ -82,6 +82,11 @@ else {
         self.wait.until(
             EC.visibility_of_element_located((By.ID, "VisibleReportContentm_sqlRsWebPart_ctl00_ReportViewer_ctl09")))
 
+    def wait_table_load(self):
+        time.sleep(1)
+        self.wait.until(EC.invisibility_of_element_located((By.ID, self.report_info.loader_id)))
+        time.sleep(1)
+
     def get_select_options(self, select_id, ignore_options=None):
         if ignore_options is None:
             ignore_options = []
@@ -108,14 +113,10 @@ else {
                 raise e
 
     def press_apply(self):
-        """
-
-        :return:
-        """
         element = self.wait.until(
             EC.presence_of_element_located((By.ID, self.report_info.apply_id)))
         element.click()
-        self.wait_loading_end()
+        self.wait_table_load()
 
     def _update_driver(self, driver_relative_path):
         if self.update_driver_lock is not None:

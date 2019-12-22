@@ -14,7 +14,7 @@ VERSIONS_REPORT_URL = 'http://webilsites.marvell.com/sites/MISLSites/FHILL/IT/IA
 ALL_STORIES_REPORT_NAME = 'AllStories'
 ALL_STORIES_REPORT_URL = 'http://webilsites.marvell.com/sites/MISLSites/FHILL/IT/IA/JIRA/_layouts/15/ReportServer/RSViewerPage.aspx?rv:RelativeReportUrl=/sites/MISLSites/FHILL/IT/IA/JIRA/PublicDocuments/Reports/All%20Stories%20by%20Rank%20with%20sub%20tasks.rdl'
 
-MTS_PROJECTS_REPORT_NAME = 'MtsProjects'
+MTS_PROJECTS_REPORT_NAME = 'MtsBugs'
 MTS_PROJECTS_URL = 'http://webilsites.marvell.com/sites/MISLSites/FHILL/IT/IA/JIRA/_layouts/15/ReportServer/RSViewerPage.aspx?rv:RelativeReportUrl=/sites/MISLSites/FHILL/IT/IA/JIRA/PublicDocuments/Reports/NPS%20All%20Bugs%20for%20project.rdl&Source=http%3A%2F%2Fwebilsites%2Emarvell%2Ecom%2Fsites%2FMISLSites%2FFHILL%2FIT%2FIA%2FJIRA%2FPublicDocuments%2FForms%2FAllItems%2Easpx%3FRootFolder%3D%252fsites%252fMISLSites%252fFHILL%252fIT%252fIA%252fJIRA%252fPublicDocuments%252fReports%26FolderCTID%3D0x012000F0871E736C14AF4781864003DD2CBE29%23InplviewHash91b5b264%2D49d9%2D4948%2D94c9%2Db30bec91f7f8%3DTreeField%253DFolders%2DTreeValue%253DReports%2DProcessQStringToCAML%253D1%2DPaged%253DTRUE%2Dp%5FSortBehavior%253D0%2Dp%5FFileLeafRef%253DErrata%252520with%252520same%252520JIRA%252520id%25252erdl%2Dp%5FID%253D96%2DRootFolder%253D%25252fsites%25252fMISLSites%25252fFHILL%25252fIT%25252fIA%25252fJIRA%25252fPublicDocuments%25252fReports%2DPageFirstRow%253D31'
 
 # Website ID fields
