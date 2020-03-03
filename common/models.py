@@ -9,6 +9,7 @@ class Reports(object):
         self.all_stories_report = ReportInformation()
         self.all_issues_components_report = ReportInformation()
         self.mts_projects_report = ReportInformation()
+        self.mts_cpss_bugs_report = ReportInformation()
 
     def as_list(self):
         return [val for k, val in self.__dict__.items() if not str(hex(id(val))) in str(val)]
@@ -16,7 +17,9 @@ class Reports(object):
 
 class ReportInformation(object):
     def __init__(self, **kwargs):
+        self.name = kwargs.get('name', 'Untitled')
         self.url = kwargs.get('url', None)
+        self.secondary_url = kwargs.get('secondary_url', None)
         self.output_file = kwargs.get('output_file', None)
         self.report_type = kwargs.get('report_type', None)
         self.category = kwargs.get('category', None)

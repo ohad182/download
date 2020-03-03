@@ -13,9 +13,14 @@ VERSIONS_REPORT_URL = 'http://webilsites.marvell.com/sites/MISLSites/FHILL/IT/IA
 
 ALL_STORIES_REPORT_NAME = 'AllStories'
 ALL_STORIES_REPORT_URL = 'http://webilsites.marvell.com/sites/MISLSites/FHILL/IT/IA/JIRA/_layouts/15/ReportServer/RSViewerPage.aspx?rv:RelativeReportUrl=/sites/MISLSites/FHILL/IT/IA/JIRA/PublicDocuments/Reports/All%20Stories%20by%20Rank%20with%20sub%20tasks.rdl'
+ALL_STORIES_TOOLS_REPORT_URL = 'http://webilsites.marvell.com/sites/MISLSites/FHILL/IT/IA/JIRA/_layouts/15/ReportServer/RSViewerPage.aspx?rv:RelativeReportUrl=/sites/MISLSites/FHILL/IT/IA/JIRA/PublicDocuments/Reports/All%20Stories%20by%20Rank.rdl'
 
 MTS_PROJECTS_REPORT_NAME = 'MtsBugs'
 MTS_PROJECTS_URL = 'http://webilsites.marvell.com/sites/MISLSites/FHILL/IT/IA/JIRA/_layouts/15/ReportServer/RSViewerPage.aspx?rv:RelativeReportUrl=/sites/MISLSites/FHILL/IT/IA/JIRA/PublicDocuments/Reports/NPS%20All%20Bugs%20for%20project.rdl&Source=http%3A%2F%2Fwebilsites%2Emarvell%2Ecom%2Fsites%2FMISLSites%2FFHILL%2FIT%2FIA%2FJIRA%2FPublicDocuments%2FForms%2FAllItems%2Easpx%3FRootFolder%3D%252fsites%252fMISLSites%252fFHILL%252fIT%252fIA%252fJIRA%252fPublicDocuments%252fReports%26FolderCTID%3D0x012000F0871E736C14AF4781864003DD2CBE29%23InplviewHash91b5b264%2D49d9%2D4948%2D94c9%2Db30bec91f7f8%3DTreeField%253DFolders%2DTreeValue%253DReports%2DProcessQStringToCAML%253D1%2DPaged%253DTRUE%2Dp%5FSortBehavior%253D0%2Dp%5FFileLeafRef%253DErrata%252520with%252520same%252520JIRA%252520id%25252erdl%2Dp%5FID%253D96%2DRootFolder%253D%25252fsites%25252fMISLSites%25252fFHILL%25252fIT%25252fIA%25252fJIRA%25252fPublicDocuments%25252fReports%2DPageFirstRow%253D31'
+
+MTS_CPSS_BUGS_REPORT_NAME = "MTS-CPSS Bugs"
+MTS_BUGS_REPORT_URL = "http://webilsites.marvell.com/sites/MISLSites/FHILL/IT/IA/JIRA/_layouts/15/ReportServer/RSViewerPage.aspx?rv:RelativeReportUrl=/sites/MISLSites/FHILL/IT/IA/JIRA/PublicDocuments/Reports/NPS%20All%20Bugs%20for%20project.rdl"
+CPSS_BUGS_REPORT_URL = "http://webilsites.marvell.com/sites/MISLSites/FHILL/IT/IA/JIRA/_layouts/15/ReportServer/RSViewerPage.aspx?rv:RelativeReportUrl=/sites/MISLSites/FHILL/IT/IA/JIRA/PublicDocuments/Reports/CPSS%20All%20Issues.rdl"
 
 # Website ID fields
 APPLY_ID = "m_sqlRsWebPart_ctl00_ctl19_ApplyParameters"
@@ -43,6 +48,12 @@ MTS_IGNORE_OPTIONS = ['ARC-II-III', 'Astute', 'Belkin', 'CORE', 'CPSS', 'CPSS_JO
                       'Tachi', 'Tachi 2 (920)', 'Tesla 2.0', 'Tesla 2.1', 'Tesla 2.2', 'Tesla 2.2.5', 'Tesla 2.2.7',
                       'Tesla 2.2.8', 'Tesla 2.3', 'Tesla 2.3.5', 'Tesla 2.4', 'Tesla 2.4.5', 'Test Security',
                       'Test import web project', 'Troya', 'Validation Book', 'Validation Infra']
+
+MTS_IGNORE_OPTIONS_DEBUG = MTS_IGNORE_OPTIONS + ["PILGRIM Plus", "ABSENCE", "Carrier_HAL", "Cisco CBS", "Dell_MR",
+                                                 "EBOF", "EZBRINGUP", "Enterprise APIs", "Generic Web", "MTS AC5X",
+                                                 "MTS Extreme .1BR", "MTS INFRA", "MTS RD Aldrin", "NetGear_S3500",
+                                                 "Netgear_MR", "Nikola Global", "Pilgrim", "QTest Demo", "SwitchDev",
+                                                 "Tesla 2.5"] #, "Tesla 2.5.5", "Tesla 2.5.7", "Tesla 2.6", "Web"
 
 
 def create_temp_folder(notify: bool):

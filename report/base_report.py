@@ -69,7 +69,10 @@ else {
         pass
 
     def open_url(self, verbose=True):
-        self.driver.get(self.report_info.url)
+        self.open(self.report_info.url)
+
+    def open(self, url=None, verbose=True):
+        self.driver.get(url)
         self.wait_loading_end()
         if verbose:
             print("Page loading phase finished")

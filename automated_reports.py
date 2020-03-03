@@ -1,19 +1,20 @@
 import sys
 import threading
 import tkinter as ui
-from tkinter import ttk
 import common
 import traceback
 from common.configuration import Configuration
-from common.models import Reports, ReportInformation, IssueComponentData, IssueComponentSelection
-from common.preserved_config import PreservedConfig
-from report.all_issues_components_report import AllIssuesComponentReport
+from common.models import Reports, ReportInformation, IssueComponentData
+from report.mts_cpss_bugs_report import MtsCpssBugsReport
 from report.all_stories_report import AllStoriesReport
 from report.mts_projects_report import MtsProjectReport
 from common.exceptions import SiteErrorException
 from joblib import Parallel, delayed, parallel_backend
-
 from report.versions_report import VersionsReport
+
+# from tkinter import ttk
+# from common.preserved_config import PreservedConfig
+# from report.all_issues_components_report import AllIssuesComponentReport
 
 WINDOWED = True
 
@@ -43,7 +44,7 @@ def download_all_stories_report():
         all_stories_data.url = common.ALL_STORIES_REPORT_URL
 
     try:
-        report = AllStoriesReport(all_stories_data)
+        report = AllStoriesReport(all_stories_data, tools_url=common.ALL_STORIES_TOOLS_REPORT_URL)
         report_data = report.get_report_content().replace("\r\n", "\n")
         with open(all_stories_data.output_file, 'w') as f:
             f.write(report_data)
@@ -52,10 +53,27 @@ def download_all_stories_report():
         print('Error: {}'.format(e))
 
 
-def download_mts_projects_report():
+def download_mts_cpss_bugs_report():
+    mts_cpss_bugs_report_data: ReportInformation = reports.mts_cpss_bugs_report
+    if mts_cpss_bugs_report_data.url is None:
+        mts_cpss_bugs_report_data.url = common.CPSS_BUGS_REPORT_URL
+
+    try:
+        mts_content = get_mts_bugs_report_content(common.MTS_IGNORE_OPTIONS)
+        report = MtsCpssBugsReport(mts_cpss_bugs_report_data)
+        report.get_report_content(mts_content=mts_content)
+    except Exception as e:
+        print('Error: {}'.format(e))
+
+
+def get_mts_bugs_report_content(ignore=None):
+    results = None
     mts_projects_data = reports.mts_projects_report
     if mts_projects_data.url is None:
         mts_projects_data.url = common.MTS_PROJECTS_URL
+
+    if ignore is not None:
+        mts_projects_data.ignore_options = ignore
 
     report = MtsProjectReport(mts_projects_data)
     required_options = []
@@ -79,11 +97,22 @@ def download_mts_projects_report():
                 results = Parallel()(
                     delayed(download_mts_task)(mts_projects_data, option, lock) for option in required_options)
                 print("All tasks completed")
-                MtsProjectReport.write_report(results, mts_projects_data)
             except Exception as ex:
                 print(ex)
     except Exception as e:
         print(e)
+
+    return results
+
+
+def download_mts_projects_report():
+    mts_projects_data = reports.mts_projects_report
+    if mts_projects_data.url is None:
+        mts_projects_data.url = common.MTS_PROJECTS_URL
+
+    results = get_mts_bugs_report_content()
+    if results is not None:
+        MtsProjectReport.write_report(results, mts_projects_data)
 
 
 def download_mts_task(mts_projects_data: ReportInformation, option_select, lock=None):
@@ -98,11 +127,12 @@ def download_mts_task(mts_projects_data: ReportInformation, option_select, lock=
     return result
 
 
-def get_section_dict(section_name, default_output, default_url, ignore_optons=None):
+def get_section_dict(section_name, default_output, default_url, ignore_optons=None, secondary_url=None):
     projects_list = config.get(section_name, "projects", None)
     if projects_list is not None:
         projects_list = [x.strip() for x in projects_list.split(',')]
     return {
+        "name": section_name,
         "output_file": config.get(section_name, "output_file", default_output),
         "category": config.get(section_name, "category", "MTS"),
         "report_type": config.get(section_name, "report_type", "csv"),
@@ -114,7 +144,8 @@ def get_section_dict(section_name, default_output, default_url, ignore_optons=No
         "export_menu_id": config.get(section_name, "export_menu_id", common.EXPORT_MENU_ID),
         "export_type_id_prefix": config.get(section_name, "export_type_id_prefix", common.EXPORT_TYPE_ID_PREFIX),
         "ignore_options": config.get(section_name, "ignore_options", ignore_optons),
-        "projects": projects_list
+        "projects": projects_list,
+        "secondary_url": config.get(section_name, "secondary_url", secondary_url)
     }
 
 
@@ -134,6 +165,9 @@ def get_reports_data():
         **get_section_dict(common.MTS_PROJECTS_REPORT_NAME, 'C:\\Temp\\mts_projects.csv', common.MTS_PROJECTS_URL,
                            common.MTS_IGNORE_OPTIONS)
     )
+
+    reports.mts_cpss_bugs_report = ReportInformation(
+        **get_section_dict(common.MTS_CPSS_BUGS_REPORT_NAME, 'C:\\Temp\mts_cpss_bugs.csv', common.CPSS_BUGS_REPORT_URL))
 
     return reports
 
@@ -161,7 +195,7 @@ class WindowView(object):
         self.all_stories_button = None
         self.versions_button = None
         self.mts_projects_button = None
-        self.report2_button = None
+        self.mts_cpss_bugs_report_button = None
         self.components_frame = None
         self.download_issues_components_button = None
         self.init_view()
@@ -183,8 +217,9 @@ class WindowView(object):
         self.all_stories_button = ui.Button(actions_frame, text="All Stories", command=self.get_all_stories)
         self.all_stories_button.grid(row=1, column=0, padx=20, pady=3)
 
-        # self.report2_button = ui.Button(actions_frame, text="report2", command=self.get_versions)
-        # self.report2_button.grid(row=1, column=1, padx=20, pady=3)
+        self.mts_cpss_bugs_report_button = ui.Button(actions_frame, text="MTS & CPSS Bugs",
+                                                     command=self.get_mts_cpss_bugs)
+        self.mts_cpss_bugs_report_button.grid(row=1, column=1, padx=20, pady=3)
         # self.report2_button.config(state="disabled")
 
         actions_frame.pack()
@@ -231,6 +266,18 @@ class WindowView(object):
         finally:
             self.set_buttons_state(enabled=True)
 
+    def get_mts_cpss_bugs(self):
+        threading.Thread(target=self.get_mts_cpss_bugs_thread).start()
+
+    def get_mts_cpss_bugs_thread(self):
+        self.set_buttons_state(enabled=False)
+        try:
+            download_mts_cpss_bugs_report()
+        except Exception as e:
+            print(str(e))
+        finally:
+            self.set_buttons_state(enabled=True)
+
     def get_versions(self):
         threading.Thread(target=self.get_versions_thread).start()
 
@@ -254,6 +301,7 @@ class WindowView(object):
         self.versions_button.config(state=state)
         self.all_stories_button.config(state=state)
         self.mts_projects_button.config(state=state)
+        self.mts_cpss_bugs_report_button.config(state=state)
 
 
 if __name__ == "__main__":
