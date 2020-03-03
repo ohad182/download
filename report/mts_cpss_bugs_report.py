@@ -27,7 +27,7 @@ class MtsCpssBugsReport(BaseReport):
             self.open_url()
             cpss_lines = self._get_table_content()
             cpss_lines = self._copy_column_values(cpss_lines, "CPSSVERSION", "JPROJECT", "CPSS")
-            self.write_file("C:\\temp\\test.csv", cpss_lines)
+            # self.write_file("C:\\temp\\test.csv", cpss_lines)
             cpss_lines = self._add_group(cpss_lines, "CPSS")
             if "CPSSVERSION" in cpss_lines[0]:
                 cpss_lines[0] = cpss_lines[0].replace("CPSSVERSION", "PROJECTVERSION")
